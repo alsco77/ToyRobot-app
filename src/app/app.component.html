@@ -85,7 +85,7 @@
                       <i class="material-icons list-icon" style="color: green">done</i>
                       {{command.commandType}} 
                       <span *ngIf="command.commandType == 'PLACE'">
-                      &nbsp;{{ command.x_coord }},{{ command.y_coord }},{{ command.direction }}
+                      &nbsp;{{ command.x_coord }},{{ command.y_coord }},{{Direction[command.direction]}}
                       </span>
                   </span>
                   <span *ngIf="!command.valid">

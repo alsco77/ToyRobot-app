@@ -1,8 +1,14 @@
 import { Component } from '@angular/core';
-
 import { DialogComponent } from './dialog/dialog.component';
 import {MatDialog, MatDialogRef} from '@angular/material';
 import { Direct } from 'protractor/built/driverProviders';
+
+export enum Direction {
+  NORTH,
+  EAST,
+  SOUTH,
+  WEST
+}
 
 @Component({
   selector: 'app-root',
@@ -21,11 +27,13 @@ export class AppComponent {
   public output: Array<string> = [];
   private executed_command_history: Array<Command> = [];
 
+  public Direction = Direction;
+
   currentFile: File;
 
   constructor(public dialog: MatDialog) {}
   
-  public executeCommand(input: string): void {
+  public executeCommand(input: string): void { 
     var command = this.getCommandObject(input);
     this.executed_command_history.push(command);
     if(command.valid){
@@ -37,14 +45,14 @@ export class AppComponent {
           this.position = this.moveToyForwards();
           break;
         case CmdType.LEFT:
-          var newDirectionInt = Direction[this.position.direction] - 1;
-          this.position = new Position(this.position.x_coord, this.position.y_coord, Direction[newDirectionInt < 0 ? 3 : newDirectionInt])
+          var newDirectionInt = this.position.direction - 1;
+          this.position = new Position(this.position.x_coord, this.position.y_coord, newDirectionInt < 0 ? 3 : newDirectionInt)
           break;
         case CmdType.RIGHT:
-          this.position = new Position(this.position.x_coord, this.position.y_coord, Direction[(Direction[this.position.direction] + 1) % 4])
+          this.position = new Position(this.position.x_coord, this.position.y_coord, (this.position.direction + 1) % 4)
           break;
         case CmdType.REPORT:
-          this.output.push(this.position.x_coord + ',' + this.position.y_coord + ',' + this.position.direction)
+          this.output.push(this.position.x_coord + ',' + this.position.y_coord + ',' + Direction[this.position.direction])
           break;
         default:
           break;
@@ -53,7 +61,7 @@ export class AppComponent {
   }
 
   private moveToyForwards() : Position {
-    switch (Direction[this.position.direction]){
+    switch (this.position.direction){
       case Direction.NORTH:
         return new Position(this.position.x_coord, this.position.y_coord + 1, this.position.direction);
       case Direction.EAST:
@@ -64,6 +72,7 @@ export class AppComponent {
         return new Position(this.position.x_coord - 1, this.position.y_coord, this.position.direction);
       default:
         return this.position;
+    }
   }
 
   private getCommandObject(input: string) : Command{
@@ -76,7 +85,7 @@ export class AppComponent {
       if(!isNaN(+params[0]) && +params[0] <= this.grid_max_x && +params[0] >= this.grid_origin_x
         && !isNaN(+params[1]) && +params[1] <= this.grid_max_y && +params[1] >= this.grid_origin_y
         && params[2] in Direction){
-          return new Command(input, true, CmdType.PLACE, +params[0], +params[1], params[2]);
+          return new Command(input, true, CmdType.PLACE, +params[0], +params[1], Direction[params[2]]);
       }else{
         return new Command(input, false);
       }
@@ -91,9 +100,10 @@ export class AppComponent {
     return new Command(input, false);
   }
 
+
   private isFacingEdge(): boolean{
     if(this.position != null){
-      switch (Direction[this.position.direction]){
+      switch (this.position.direction){
         case Direction.NORTH:
           return this.position.y_coord >= this.grid_max_y;
         case Direction.EAST:
@@ -138,7 +148,6 @@ export class AppComponent {
   runFileCommands(){
     this.clearOutput();
     this.clearExecutedCommands();
-    this.textCommand = "";
     this.position = null;
 
     var text = "";
@@ -176,12 +185,7 @@ export class Command{
 
 }
 
-export enum Direction {
-  NORTH,
-  EAST,
-  SOUTH,
-  WEST
-}
+
 
 export enum CmdType {
   PLACE = "PLACE",
