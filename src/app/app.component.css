@@ -10,8 +10,11 @@
     width: 100%;
 }
 
+.default-card{
+    min-height: 80px;
+}
 
-#executed-commands-card{
+.card-space{
     margin-top: 20px;
 }
 

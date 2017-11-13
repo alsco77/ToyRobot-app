@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+
 import { DialogComponent } from './dialog/dialog.component';
 import {MatDialog, MatDialogRef} from '@angular/material';
 import { Direct } from 'protractor/built/driverProviders';
@@ -18,17 +19,18 @@ export class AppComponent {
   public position: Position = null;
 
   public output: Array<string> = [];
-
   private executed_command_history: Array<Command> = [];
+
+  currentFile: File;
 
   constructor(public dialog: MatDialog) {}
   
   public executeCommand(input: string): void {
-    var command = this.getCommandIfValid(input);
-    if(command != null){
+    var command = this.getCommandObject(input);
+    this.executed_command_history.push(command);
+    if(command.valid){
       console.log('success! Command: ' + command.commandType + ',' + command.x_coord + ',' + command.y_coord + ',' + command.direction);
-      this.executed_command_history.push(command);
-
+      
       switch (command.commandType){
         case CmdType.PLACE:
           this.position = new Position(command.x_coord, command.y_coord, command.direction);
@@ -49,8 +51,6 @@ export class AppComponent {
         default:
           break;
       }
-    }else{
-      this.executed_command_history.push(new Command(input, false));
     }
   }
 
@@ -68,19 +68,19 @@ export class AppComponent {
         return this.position;
   }
 
-  private getCommandIfValid(input: string) : Command{
+  private getCommandObject(input: string) : Command{
     var inputUpper = input.toUpperCase();
 
     if(inputUpper.substr(0, 5) == CmdType.PLACE){
       var params = inputUpper.split(',');
-      params[0] = params[0].substr(params[0].length - 1, 1);
+      params[0] = params[0].substr(params[0].length - 2, 2);
 
-      if(!isNaN(+params[0]) && +params[0] <= this.grid_max_x
-        && !isNaN(+params[1]) && +params[1] <= this.grid_max_y
+      if(!isNaN(+params[0]) && +params[0] <= this.grid_max_x && +params[0] >= this.grid_origin_x
+        && !isNaN(+params[1]) && +params[1] <= this.grid_max_y && +params[1] >= this.grid_origin_y
         && params[2] in Direction){
           return new Command(input, true, CmdType.PLACE, +params[0], +params[1], params[2]);
       }else{
-        return null;
+        return new Command(input, false);
       }
     }
 
@@ -90,7 +90,7 @@ export class AppComponent {
       }
     }
     
-    return null;
+    return new Command(input, false);
   }
 
   private isFacingEdge(): boolean{
@@ -128,6 +128,32 @@ export class AppComponent {
 
   public clearExecutedCommands(): void{
     this.executed_command_history = [];
+  }
+
+  fileChange(event) {
+    let fileList: FileList = event.target.files;
+    if(fileList.length > 0) {
+        this.currentFile = fileList[0];
+    }
+  }
+
+  runFileCommands(){
+    this.clearOutput();
+    this.clearExecutedCommands();
+    this.textCommand = "";
+    this.position = null;
+
+    var text = "";
+    let reader = new FileReader();
+    reader.onloadend = () => {
+      reader.result.split("\n").forEach(element => {
+        if(element.length > 0){
+          this.executeCommand(element);
+        }
+      }); 
+    }
+
+    reader.readAsText(this.currentFile);   
   }
 }
 
