@@ -29,8 +29,6 @@ export class AppComponent {
     var command = this.getCommandObject(input);
     this.executed_command_history.push(command);
     if(command.valid){
-      console.log('success! Command: ' + command.commandType + ',' + command.x_coord + ',' + command.y_coord + ',' + command.direction);
-      
       switch (command.commandType){
         case CmdType.PLACE:
           this.position = new Position(command.x_coord, command.y_coord, command.direction);
